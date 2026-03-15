@@ -6,12 +6,13 @@
 <title>Jackson Fitness — Sistema de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<!-- Chart.js con fallback -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
 <style>
 :root {
   --bg: #0A0A0F;
@@ -2393,7 +2394,7 @@ input::placeholder, textarea::placeholder { color: var(--text3); }
           <p class="section-sub">Análisis y estadísticas del gimnasio</p>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-outline" onclick="pdfMiembros()"><i class="fas fa-file-pdf" style="color:#EF4444"></i> Miembros</button>
+          <button class="btn btn-outline" onclick="pdfMiembros()"><i class="fas fa-file-pdf" style="color:var(--red)"></i> Miembros</button>
           <button class="btn btn-outline" onclick="pdfPagos()"><i class="fas fa-file-pdf" style="color:#EF4444"></i> Pagos</button>
           <button class="btn btn-outline" onclick="pdfVencimientos()"><i class="fas fa-file-pdf" style="color:#EF4444"></i> Por Vencer</button>
         </div>
@@ -3631,12 +3632,12 @@ function navigateBase(sectionId) {
   document.getElementById('crumbCurrent').textContent = sectionNames[sectionId] || sectionId;
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
-  if (sectionId === 'dashboard') initDashboardCharts();
+  if (sectionId === 'dashboard') waitForChart(initDashboardCharts);
   if (sectionId === 'members') renderMembers();
   if (sectionId === 'plans') renderPlans();
   if (sectionId === 'payments') renderPayments();
   if (sectionId === 'access') renderAccessTable();
-  if (sectionId === 'reports') initReportCharts();
+  if (sectionId === 'reports') waitForChart(initReportCharts);
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -3669,6 +3670,14 @@ var CD_SCALES = {
 var CD_BASE = { responsive: true, maintainAspectRatio: false };
 var chartDefaults = { plugins: CD_PLUGINS, scales: CD_SCALES, responsive: true, maintainAspectRatio: false };
 
+function waitForChart(callback) {
+  if (typeof Chart !== 'undefined') {
+    callback();
+  } else {
+    setTimeout(function() { waitForChart(callback); }, 300);
+  }
+}
+
 function initDashboardCharts() {
   destroyChart('ingresos'); destroyChart('asistencia');
 
@@ -3692,7 +3701,7 @@ function initDashboardCharts() {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1A1A24', borderColor: '#2A2A3A', borderWidth: 1, titleColor: '#F0F0F5', bodyColor: '#9090A8', padding: 10, callbacks: { label: ctx => '  ₡' + ctx.raw.toLocaleString('es-CR') } } },
-      scales: { x: CD_SCALES.x, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5A5A72', font: { family: 'DM Sans', size: 11 } }, ticks: { responsive: true, maintainAspectRatio: false.scales.y.ticks, callback: v => '₡' + (v/1000000).toFixed(1) + 'M' } } }
+      scales: { x: CD_SCALES.x, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5A5A72', font: { family: 'DM Sans', size: 11 }, callback: function(v){ return '₡' + (v/1000000).toFixed(1) + 'M'; } } } }
     }
   });
 
@@ -3736,7 +3745,7 @@ function initReportCharts() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      scales: { x: CD_SCALES.x, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5A5A72', font: { family: 'DM Sans', size: 11 } }, ticks: { responsive: true, maintainAspectRatio: false.scales.y.ticks, callback: v => '₡' + (v/1000).toFixed(0) + 'K' } } }
+      scales: { x: CD_SCALES.x, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5A5A72', font: { family: 'DM Sans', size: 11 }, callback: function(v){ return '₡' + (v/1000).toFixed(0) + 'K'; } } } }
     }
   });
 
@@ -3786,7 +3795,7 @@ function initReportCharts() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      scales: { x: CD_SCALES.x, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5A5A72', font: { family: 'DM Sans', size: 11 } }, ticks: { responsive: true, maintainAspectRatio: false.scales.y.ticks, callback: v => '₡' + (v/1000000).toFixed(1) + 'M' } } }
+      scales: { x: CD_SCALES.x, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5A5A72', font: { family: 'DM Sans', size: 11 }, callback: function(v){ return '₡' + (v/1000000).toFixed(1) + 'M'; } } } }
     }
   });
 }
@@ -6007,6 +6016,7 @@ function loginSuccess(user) {
     renderPayments();
     loadWhatsapp();
     checkAndShowWAReminder();
+    waitForChart(initDashboardCharts);
   });
   showToast('success', '¡Bienvenido/a, ' + user.name + '!', 'Sesión como ' + (ROLE_LABELS[user.role]||user.role));
 }
@@ -6360,12 +6370,12 @@ function navigateTo(sectionId) {
   document.getElementById('crumbCurrent').textContent = sectionNames[sectionId] || sectionId;
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
-  if (sectionId === 'dashboard') initDashboardCharts();
+  if (sectionId === 'dashboard') waitForChart(initDashboardCharts);
   if (sectionId === 'members') renderMembers();
   if (sectionId === 'plans') renderPlans();
   if (sectionId === 'payments') renderPayments();
   if (sectionId === 'access') renderAccessTable();
-  if (sectionId === 'reports') initReportCharts();
+  if (sectionId === 'reports') waitForChart(initReportCharts);
   if (sectionId === 'usuarios') loadUsers();
   if (sectionId === 'branding') loadBrandingPanel();
   if (sectionId === 'kiosco') initKiosco();
